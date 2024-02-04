@@ -166,8 +166,33 @@ func getBatch(list []map[string]string, size int) [][]map[string]string {
 	return grupos
 }
 
+func send(body []byte) error {
+	payload := bytes.NewBuffer(body)
+
+	req, err := http.NewRequest(
+		"POST",
+		"http://localhost:4080/api/_bulkv2/",
+		payload,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Basic YWRtaW46Q29tcGxleHBhc3MjMTIz")
+
+	client := &http.Client{}
+	x, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println("*****E ", err, x)
+		return err
+	}
+	return nil
+}
+
 func sendtoZyncsearch(body []map[string]string) error {
-	for _, batch := range getBatch(body, 2000) {
+	for _, batch := range getBatch(body, 1000) {
 		requestBody := map[string]interface{}{
 			"index":   "Messages2",
 			"records": batch,
@@ -177,27 +202,7 @@ func sendtoZyncsearch(body []map[string]string) error {
 			return err
 		}
 
-		payload := bytes.NewBuffer(jsonData)
-
-		req, err := http.NewRequest(
-			"POST",
-			"http://localhost:4080/api/_bulkv2/",
-			payload,
-		)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", "Basic YWRtaW46Q29tcGxleHBhc3MjMTIz")
-
-		client := &http.Client{}
-		x, err := client.Do(req)
-
-		if err != nil {
-			fmt.Println("*****E ", err, x)
-			return err
-		}
+		go send(jsonData)
 	}
 	return nil
 }
