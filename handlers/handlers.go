@@ -15,7 +15,7 @@ func HandleImportFile(w http.ResponseWriter, r *http.Request) {
 	status, err := ImportFileService(file)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(status))
