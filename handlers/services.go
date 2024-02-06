@@ -151,7 +151,7 @@ func send(body []byte) error {
 func sendtoZyncsearch(body []map[string]string) error {
 	for _, batch := range GetBatch(body, 1000) {
 		requestBody := map[string]interface{}{
-			"index":   "Messages3",
+			"index":   "Messages",
 			"records": batch,
 		}
 		jsonData, err := json.Marshal(requestBody)
