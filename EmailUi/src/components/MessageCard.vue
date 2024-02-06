@@ -23,4 +23,3 @@ function getReaded(id) {
         <p class="text-slate-500 text-sm text-nowrap overflow-hidden overflow-ellipsis">{{ content }}</p>
     </div>
 </template>
-2

@@ -2,7 +2,7 @@ import { useFetch } from "./fetch"
 import { ref } from 'vue'
 export function messagesService() {
   const currentMessages = ref()
-  const { data, error, post } = useFetch()
+  const { data, error, post, postFile } = useFetch()
 
   const get_from_name = xfrom => {
     const splitedText = xfrom?.split('<')
@@ -62,5 +62,12 @@ export function messagesService() {
 
   }
 
-  return { getMessages, addMessages, currentMessages, data, error }
+  const uploadFile = (file, callback) => {
+    const form = new FormData()
+    form.append("file", file)
+    postFile('http://localhost:8000/import_file', form, callback)
+
+  }
+
+  return { getMessages, addMessages, uploadFile, currentMessages, data, error }
 }
