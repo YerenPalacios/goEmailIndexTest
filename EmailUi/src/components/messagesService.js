@@ -1,12 +1,12 @@
 import { useFetch } from "./fetch"
-import moment from 'moment'
-
+import { ref } from 'vue'
 export function messagesService() {
+  const currentMessages = ref()
   const { data, error, post } = useFetch()
 
   const get_from_name = xfrom => {
-    const splitedText = xfrom.split('<')
-    if (splitedText.length > 1) return splitedText[0]
+    const splitedText = xfrom?.split('<')
+    if (splitedText && splitedText.length > 1) return splitedText[0]
     else return xfrom
   }
 
@@ -26,10 +26,11 @@ export function messagesService() {
       }
       return item
     })
+    currentMessages.value = messages
     return messages
   }
 
-  const getMessages = (query) => {
+  const getQuery = (query, from, to)=>{
     const must = []
 
     if (!query) {
@@ -39,14 +40,27 @@ export function messagesService() {
     }
 
     const payload = {
-      query: {
-        bool: {
-          must
-        }
-      }
+      query: { bool: { must } }, from, to, sort: ["-@timestamp"]
     }
+    return payload
+  }
+
+
+  const getMessages = (query, from = 0, to = 10) => {
+    const payload = getQuery(query, from, to)
     post('http://localhost:4080/es/Messages2/_search', payload, messageSerializer)
   }
 
-  return { getMessages, data, error }
+  const sumMessages = (data) => {
+    currentMessages.value = currentMessages.value.concat(messageSerializer(data))
+    return data
+  }
+
+  const addMessages = (query, from = 0, to = 0) => {
+    const payload = getQuery(query, from, to)
+    post('http://localhost:4080/es/Messages2/_search', payload, sumMessages)
+
+  }
+
+  return { getMessages, addMessages, currentMessages, data, error }
 }

@@ -1,4 +1,4 @@
-import { ref, watchEffect, toValue } from 'vue'
+import { ref } from 'vue'
 
 export function useFetch() {
 	const data = ref(null)
@@ -9,9 +9,14 @@ export function useFetch() {
 		error.value = null
 
 		fetch(url, options)
-			.then((res) => res.json())
-			.then((json) => (data.value = serializer(json)))
-			.catch((err) => (error.value = err))
+			.then((res) => {
+				if (res.status >= 400) throw new Error('Error was found')
+				return res.json()
+			})
+			.then((json) => {
+				data.value = serializer(json)
+			})
+			.catch((err) => { error.value = err; console.log(err) })
 	}
 
 	const post = (url, body, serializer) => {
