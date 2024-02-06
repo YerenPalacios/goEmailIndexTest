@@ -5,27 +5,45 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
+	_ "net/http/pprof"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
+
+var cpuprofile = flag.String("cpuprofile", "", ".main.prof")
+var memprofile = flag.String("memprofile", "", "write memory profile to `main.prof`")
 
 func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+	r.Mount("/debug", middleware.Profiler())
 	r.Post("/import_file", handleImportFile)
-	http.ListenAndServe(":8000", r)
+	http.ListenAndServe("0.0.0.0:8000", r)
+
 }
 
 func handleImportFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 	file, handler, err := r.FormFile("file")
 	if err != nil {
+		print("hola....")
 		http.Error(w, "Error reading file", http.StatusBadGateway)
+		return
 	}
 	fmt.Println(handler.Filename, file)
 	gzf, err := gzip.NewReader(file)
@@ -36,18 +54,20 @@ func handleImportFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Error reading file", http.StatusBadGateway)
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, "Error transforming file to json", http.StatusBadGateway)
+			return
 		} else {
 			err = sendtoZyncsearch(contentListMap)
 			if err != nil {
 				http.Error(w, "Error sending data", http.StatusBadGateway)
-
+				return
 			} else {
-				w.Write([]byte("OK"))
+				w.Write([]byte("{\"status\": \"Ok\"}"))
 			}
 
 		}
@@ -171,7 +191,7 @@ func send(body []byte) error {
 
 	req, err := http.NewRequest(
 		"POST",
-		"http://172.26.32.1:4080/api/_bulkv2/",
+		"http://localhost:4080/api/_bulkv2/",
 		payload,
 	)
 	if err != nil {
