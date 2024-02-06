@@ -1,4 +1,4 @@
-package handlers
+package main
 
 func GetBatch(list []map[string]string, size int) [][]map[string]string {
 	var grupos [][]map[string]string

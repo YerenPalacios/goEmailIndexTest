@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"handlers"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -46,7 +45,7 @@ func getFilePayload(t *testing.T, name string) (*bytes.Buffer, *multipart.Writer
 
 func TestImportFileHandler(t *testing.T) {
 	r := chi.NewRouter()
-	r.Post("/upload", handlers.HandleImportFile)
+	r.Post("/upload", HandleImportFile)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -81,7 +80,7 @@ func TestImportFileHandler(t *testing.T) {
 
 func TestImportFileHandlerBadFile(t *testing.T) {
 	r := chi.NewRouter()
-	r.Post("/upload", handlers.HandleImportFile)
+	r.Post("/upload", HandleImportFile)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
