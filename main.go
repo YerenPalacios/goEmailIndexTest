@@ -1,7 +1,6 @@
 package main
 
 import (
-	"handlers"
 	"net/http"
 	_ "net/http/pprof"
 
@@ -23,6 +22,6 @@ func main() {
 	}))
 	r.Mount("/debug", middleware.Profiler())
 
-	r.Post("/import_file", handlers.HandleImportFile)
+	r.Post("/import_file", HandleImportFile)
 	http.ListenAndServe("0.0.0.0:8000", r)
 }

@@ -48,7 +48,7 @@ export function messagesService() {
 
   const getMessages = (query, from = 0, to = 10) => {
     const payload = getQuery(query, from, to)
-    post('http://localhost:4080/es/Messages2/_search', payload, messageSerializer)
+    post('http://localhost:4080/es/Messages/_search', payload, messageSerializer)
   }
 
   const sumMessages = (data) => {
@@ -58,7 +58,7 @@ export function messagesService() {
 
   const addMessages = (query, from = 0, to = 0) => {
     const payload = getQuery(query, from, to)
-    post('http://localhost:4080/es/Messages2/_search', payload, sumMessages)
+    post('http://localhost:4080/es/Messages/_search', payload, sumMessages)
 
   }
 
