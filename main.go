@@ -41,7 +41,6 @@ func handleImportFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 	file, handler, err := r.FormFile("file")
 	if err != nil {
-		print("hola....")
 		http.Error(w, "Error reading file", http.StatusBadGateway)
 		return
 	}
@@ -191,7 +190,7 @@ func send(body []byte) error {
 
 	req, err := http.NewRequest(
 		"POST",
-		"http://localhost:4080/api/_bulkv2/",
+		"http://172.26.32.1:4080/api/_bulkv2/",
 		payload,
 	)
 	if err != nil {
