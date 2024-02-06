@@ -4,14 +4,19 @@ import MessageCard from './components/MessageCard.vue'
 import { messagesService } from './components/messagesService';
 import moment from 'moment'
 
-const { getMessages, data, error } = messagesService()
+const { getMessages, addMessages, currentMessages, error } = messagesService()
 
 const currentMessage = ref(null)
+var currentSearch = ""
 
-function increaseCount(id) {
-  const filteredMessage = data.value.filter(message => message.id === id)
+function updateCurrrentMessage(id) {
+  const readed = localStorage.getItem('readed') || ""
+  localStorage.setItem('readed', readed + id)
+
+  const filteredMessage = currentMessages.value.filter(message => message.id === id)
   if (filteredMessage.length === 1) {
     currentMessage.value = {
+      id: filteredMessage[0].id,
       from: {
         name: filteredMessage[0].from_name,
         email: filteredMessage[0].from_email
@@ -27,8 +32,13 @@ function increaseCount(id) {
   }
 }
 
-function searchMessages(e) {
-  getMessages(e.target.value)
+function searchMessages() {
+  getMessages(currentSearch)
+}
+
+function appendMessages() {
+  const from = currentMessages.value.length
+  addMessages(currentSearch, from, from + 10)
 }
 
 onMounted(() => {
@@ -44,12 +54,16 @@ onMounted(() => {
         <div
           class="flex shadow-sm sticky top-0 bg-[#fafafa] hover:bg-[#fff] items-center px-6 py-4 border-b-[1px] border-slate-300">
           <img class="opacity-50 select-none" width="20" height="20" src="./assets/search.png" alt="">
-          <input @keydown.enter="searchMessages" v-on:blur="searchMessages" class="outline-none bg-transparent text-slate-600 ml-3" type="text">
+          <input v-model="currentSearch" @keydown.enter="searchMessages" v-on:blur="searchMessages"
+            class="outline-none bg-transparent text-slate-600 ml-3 " type="text">
         </div>
-        <MessageCard v-for="message in data" @increase-by="increaseCount" :id=message.id :date=message.date
-          :fromName=message.from_name :subject=message.subject :content=message.content />
+        <MessageCard v-for="message in currentMessages" @updateCurrentMessage="updateCurrrentMessage" :id=message.id
+          :date=message.date :fromName=message.from_name :subject=message.subject :content=message.content />
 
-        <div v-if="!data" class="flex justify-center items-center h-56">
+        <button @click="appendMessages"
+          class="rounded-full w-10 h-10 bg-blue-500 mx-auto my-5 text-slate-50 flex items-center justify-center text-2xl leading-none">+</button>
+
+        <div v-if="!currentMessages" class="flex justify-center items-center h-56">
           <p class="text-slate-300 select-none">No messages found...</p>
         </div>
       </div>
@@ -82,4 +96,6 @@ onMounted(() => {
     </article>
 
   </section>
+  <div v-if="error" class="absolute shadow-md bg-red-500 right-10 bottom-10 px-4 py-2 rounded-sm text-slate-100">Error {{
+      error }}</div>
 </template>
