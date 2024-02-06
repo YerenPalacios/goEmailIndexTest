@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import MessageCard from './components/MessageCard.vue'
 import { messagesService } from './components/messagesService';
+import FileImporter from './components/FileImporter.vue';
 import moment from 'moment'
 
 const { getMessages, addMessages, currentMessages, error } = messagesService()
@@ -60,11 +61,12 @@ onMounted(() => {
         <MessageCard v-for="message in currentMessages" @updateCurrentMessage="updateCurrrentMessage" :id=message.id
           :date=message.date :fromName=message.from_name :subject=message.subject :content=message.content />
 
-        <button @click="appendMessages"
-          class="rounded-full w-10 h-10 bg-blue-500 mx-auto my-5 text-slate-50 flex items-center justify-center text-2xl leading-none">+</button>
+        <button v-if="currentMessages?.length" @click="appendMessages"
+          class="rounded-full hover:bg-blue-200 w-10 h-10 bg-blue-100 mx-auto my-5 text-blue-700 flex items-center justify-center text-2xl leading-none">+</button>
 
-        <div v-if="!currentMessages" class="flex justify-center items-center h-56">
+        <div v-if="!currentMessages?.length" class="flex flex-col justify-center items-center h-56">
           <p class="text-slate-300 select-none">No messages found...</p>
+          <FileImporter />
         </div>
       </div>
     </div>
@@ -97,5 +99,5 @@ onMounted(() => {
 
   </section>
   <div v-if="error" class="absolute shadow-md bg-red-500 right-10 bottom-10 px-4 py-2 rounded-sm text-slate-100">Error {{
-      error }}</div>
+    error }}</div>
 </template>

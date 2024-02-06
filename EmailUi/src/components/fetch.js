@@ -4,7 +4,7 @@ export function useFetch() {
 	const data = ref(null)
 	const error = ref(null)
 
-	const fetchData = (url, options, serializer) => {
+	const fetchData = (url, options, callback) => {
 		data.value = null
 		error.value = null
 
@@ -14,12 +14,12 @@ export function useFetch() {
 				return res.json()
 			})
 			.then((json) => {
-				data.value = serializer(json)
+				data.value = callback(json)
 			})
 			.catch((err) => { error.value = err; console.log(err) })
 	}
 
-	const post = (url, body, serializer) => {
+	const post = (url, body, callback = () => { }) => {
 		fetchData(url, {
 			method: 'POST',
 			body: JSON.stringify(body),
@@ -27,8 +27,15 @@ export function useFetch() {
 				'Content-type': 'application/json',
 				'Authorization': 'Basic YWRtaW46Q29tcGxleHBhc3MjMTIz'
 			}
-		}, serializer)
+		}, callback)
 	}
 
-	return { data, error, post }
+	const postFile = (url, body, callback  = () => { }) => {
+		fetchData(url, {
+			method: 'POST',
+			body,
+		}, callback)
+	}
+
+	return { data, error, post, postFile }
 }
