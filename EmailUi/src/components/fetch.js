@@ -3,10 +3,12 @@ import { ref } from 'vue'
 export function useFetch() {
 	const data = ref(null)
 	const error = ref(null)
+	const loading = ref(false)
 
 	const fetchData = (url, options, callback) => {
 		data.value = null
 		error.value = null
+		loading.value = true
 
 		fetch(url, options)
 			.then((res) => {
@@ -18,6 +20,7 @@ export function useFetch() {
 				data.value = callback(json)
 			})
 			.catch((err) => { error.value = err; console.log(err) })
+			.finally(()=>loading.value=false)
 	}
 
 	const post = (url, body, callback = () => { }) => {
@@ -38,5 +41,5 @@ export function useFetch() {
 		}, callback)
 	}
 
-	return { data, error, post, postFile }
+	return { data, error, loading, post, postFile }
 }

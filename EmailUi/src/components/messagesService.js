@@ -2,7 +2,7 @@ import { useFetch } from "./fetch"
 import { ref } from 'vue'
 export function messagesService() {
   const currentMessages = ref()
-  const { data, error, post, postFile } = useFetch()
+  const { data, error, post, loading, postFile } = useFetch()
 
   const get_from_name = xfrom => {
     const splitedText = xfrom?.split('<')
@@ -30,7 +30,7 @@ export function messagesService() {
     return messages
   }
 
-  const getQuery = (query, from, to)=>{
+  const getQuery = (query, from, to) => {
     const must = []
 
     if (!query) {
@@ -69,5 +69,13 @@ export function messagesService() {
 
   }
 
-  return { getMessages, addMessages, uploadFile, currentMessages, data, error }
+  return {
+    getMessages,
+    addMessages,
+    uploadFile,
+    currentMessages,
+    data,
+    loading,
+    error
+  }
 }
