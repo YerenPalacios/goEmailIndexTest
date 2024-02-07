@@ -10,7 +10,8 @@ export function useFetch() {
 
 		fetch(url, options)
 			.then((res) => {
-				if (res.status >= 400) throw new Error('Error was found')
+				if (res.status >= 500) throw new Error('Error was found')
+				if (res.status >= 400) return res.text()
 				return res.json()
 			})
 			.then((json) => {
