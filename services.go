@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -26,17 +27,17 @@ func ImportFileService(file multipart.File) (string, error) {
 	}
 	contentListMap, err := getFileAsMapList(gzf)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return "", errors.New("error reading file")
 	}
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return "", errors.New("error reading file")
 	}
 	err = sendtoZyncsearch(contentListMap)
 	if err != nil {
-		fmt.Println(err)
-		return "", errors.New("error sending data")
+		log.Println(err)
+		return "", errors.New("error sending data: " + err.Error())
 	} else {
 		return "{\"status\": \"Ok\"}", nil
 	}
@@ -164,7 +165,7 @@ func getFileAsMapList(tarFile *gzip.Reader) ([]map[string]string, error) {
 	return fileContents, nil
 }
 
-func send(wg *sync.WaitGroup, body []byte) error {
+func send(wg *sync.WaitGroup, body []byte, errorChannel chan error) error {
 	defer wg.Done()
 	payload := bytes.NewBuffer(body)
 
@@ -175,6 +176,7 @@ func send(wg *sync.WaitGroup, body []byte) error {
 	)
 	if err != nil {
 		fmt.Println(err)
+		errorChannel <- err
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -184,19 +186,23 @@ func send(wg *sync.WaitGroup, body []byte) error {
 	x, err := client.Do(req)
 
 	if err != nil {
-		fmt.Println("*****E ", err, x)
+		log.Println(x)
+		errorChannel <- err
 		return err
 	}
 	return nil
 }
 
 func sendtoZyncsearch(body []map[string]string) error {
+	errorChannel := make(chan error, 0)
+
 	batches := GetBatch(body, 1000)
 	wg := new(sync.WaitGroup)
-	wg.Add(len(batches))
+
 	fmt.Println("Sending started at: ", time.Now())
 	fmt.Println(len(batches), " Batches")
 	for _, batch := range batches {
+		wg.Add(1)
 		requestBody := map[string]interface{}{
 			"index":   "Messages",
 			"records": batch,
@@ -205,9 +211,13 @@ func sendtoZyncsearch(body []map[string]string) error {
 		if err != nil {
 			return err
 		}
-		go send(wg, jsonData)
+		go send(wg, jsonData, errorChannel)
 	}
+	err := <-errorChannel
 	wg.Wait()
+	if err != nil {
+		return err
+	}
 	fmt.Println("Data sent at: ", time.Now())
 	return nil
 }
