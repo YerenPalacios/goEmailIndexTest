@@ -4,7 +4,7 @@ import { messagesService } from './messagesService';
 
 var importFile = null
 
-const { uploadFile, data } = messagesService()
+const { uploadFile, error } = messagesService()
 const uploaded = ref(false)
 
 const handleUploadFile = (e) => {
@@ -15,6 +15,7 @@ const dataUploaded = (data) => {
     if (data?.status == "Ok") {
         uploaded.value = true
     }
+    else error.value = data
 }
 
 const sendFile = () => {
@@ -34,4 +35,6 @@ const sendFile = () => {
         <button @click="sendFile" class="bg-blue-100 text-blue-700 hover:bg-blue-200 py-2 px-4 rounded-full">Import
             messages</button>
     </div>
+    <div v-if="error" class="absolute shadow-md bg-red-500 right-10 bottom-10 px-4 py-2 rounded-sm text-slate-100">Error: {{
+        error }}</div>
 </template>
