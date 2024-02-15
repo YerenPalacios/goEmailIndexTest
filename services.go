@@ -34,7 +34,7 @@ func ImportFileService(file multipart.File) (string, error) {
 		log.Println(err)
 		return "", errors.New("error reading file")
 	}
-	err = sendtoZyncsearch(contentListMap)
+	err = sendToZyncSearch(contentListMap)
 	if err != nil {
 		log.Println(err)
 		return "", errors.New("error sending data: " + err.Error())
@@ -165,7 +165,7 @@ func getFileAsMapList(tarFile *gzip.Reader) ([]map[string]string, error) {
 	return fileContents, nil
 }
 
-func send(wg *sync.WaitGroup, body []byte, errorChannel chan error) error {
+func send(wg *sync.WaitGroup, body []byte, errorChannel chan error) {
 	defer wg.Done()
 	payload := bytes.NewBuffer(body)
 
@@ -177,7 +177,7 @@ func send(wg *sync.WaitGroup, body []byte, errorChannel chan error) error {
 	if err != nil {
 		fmt.Println(err)
 		errorChannel <- err
-		return err
+		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Basic YWRtaW46Q29tcGxleHBhc3MjMTIz")
@@ -186,21 +186,22 @@ func send(wg *sync.WaitGroup, body []byte, errorChannel chan error) error {
 	x, err := client.Do(req)
 
 	if err != nil {
-		log.Println(x)
+		log.Println(err, x)
 		errorChannel <- err
-		return err
+		return
 	}
-	return nil
+	errorChannel <- nil
 }
 
-func sendtoZyncsearch(body []map[string]string) error {
-	errorChannel := make(chan error, 0)
+func sendToZyncSearch(body []map[string]string) error {
+	wg := new(sync.WaitGroup)
+	errorChannel := make(chan error)
+	defer close(errorChannel)
 
 	batches := GetBatch(body, 1000)
-	wg := new(sync.WaitGroup)
 
-	fmt.Println("Sending started at: ", time.Now())
-	fmt.Println(len(batches), " Batches")
+	fmt.Println("Sending started at: ", time.Now(), "\n", len(batches), " Batches")
+
 	for _, batch := range batches {
 		wg.Add(1)
 		requestBody := map[string]interface{}{
@@ -213,10 +214,23 @@ func sendtoZyncsearch(body []map[string]string) error {
 		}
 		go send(wg, jsonData, errorChannel)
 	}
-	err := <-errorChannel
+	var errorChannelList []error
+	for range batches {
+		errorChannelList = append(errorChannelList, <-errorChannel)
+	}
 	wg.Wait()
-	if err != nil {
-		return err
+	var errorList []error
+	for _, i := range errorChannelList {
+		if i != nil {
+			errorList = append(errorList, i)
+		}
+	}
+	errorList = removeDuplication(errorList)
+	if len(errorList) == 1 {
+		return errorList[0]
+	} else if len(errorList) > 1 {
+		fmt.Println(errorList)
+		return errors.New("different errors returned")
 	}
 	fmt.Println("Data sent at: ", time.Now())
 	return nil

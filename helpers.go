@@ -27,3 +27,23 @@ func Filter(numbers []string, condition func(string) bool) []string {
 
 	return result
 }
+
+func contains(slice []error, element error) bool {
+	for _, value := range slice {
+		if value.Error() == element.Error() {
+			return true
+		}
+	}
+	return false
+}
+
+func removeDuplication(list []error) []error {
+	var newList []error
+
+	for _, element := range list {
+		if !contains(newList, element) {
+			newList = append(newList, element)
+		}
+	}
+	return newList
+}
