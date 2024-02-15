@@ -17,7 +17,7 @@ import (
 )
 
 // TODO: use environment variable
-const ZYNCSARCH_URL = "http://172.26.32.1:4080/api/_bulkv2/"
+const ZYNCSARCH_URL = "http://172.26.32.1:4080/api/_bulkv2"
 
 func ImportFileService(file multipart.File) (string, error) {
 	gzf, err := gzip.NewReader(file)
