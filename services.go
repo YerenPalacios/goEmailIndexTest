@@ -55,8 +55,7 @@ func getMapContent(rawContent string) map[string]string {
 		"Subject",
 		"Cc",
 		"Mime-Version",
-		"Mime-Version",
-		"Content-Transfer-Encoding",
+		"Content-Type",
 		"Content-Transfer-Encoding",
 		"X-From",
 		"X-To",
@@ -72,6 +71,10 @@ func getMapContent(rawContent string) map[string]string {
 
 		if len(lineInfo) > 0 {
 			splitedline := strings.Split(lineInfo[0], ": ")
+
+			if len(splitedline) > 2 {
+				splitedline[1] = strings.Join(splitedline[1:], ": ")
+			}
 
 			if len(splitedline) > 1 {
 
@@ -96,8 +99,14 @@ func getMapContent(rawContent string) map[string]string {
 			}
 		}
 	}
-	// TODO: remove lines that are no part of the message
-	item["content"] = strings.Join(contentLines[15:], "\n")
+	spaceSplitedText := strings.Split(rawContent, "\n\n")
+	if len(spaceSplitedText) >= 2 {
+		item["content"] = strings.Join(spaceSplitedText[1:], "\n")
+	} else {
+		// TODO: validate empty files
+		item["content"] = strings.Join(contentLines[15:], "\n")
+
+	}
 	item["_id"] = item["Message-ID"]
 
 	return item
