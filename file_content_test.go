@@ -7,7 +7,7 @@ import (
 
 func AssertEqual(t *testing.T, expected string, current string) {
 	if current != expected {
-		t.Fatalf("Expected \"%v\", got \"%v\"", expected, current)
+		t.Fatalf("Expected \"%v\", got \"%v\"", current, expected)
 	}
 }
 
@@ -23,7 +23,7 @@ func TestGetFileContent(t *testing.T) {
 	fileMap := getMapContent(GetFileContent(t, "./test_files/3"))
 	AssertEqual(t, fileMap["Message-ID"], "<27430435.1075840339331.JavaMail.evans@thyme>")
 	AssertEqual(t, fileMap["_id"], "<27430435.1075840339331.JavaMail.evans@thyme>")
-	AssertEqual(t, fileMap["Date"], "Tue, 19 Jun 2001 12:08:21 -0700 (PDT)")
+	AssertEqual(t, fileMap["Date"], "2001-06-19T12:08:21-07:00")
 	AssertEqual(t, fileMap["From"], "liz.legros@enron.com")
 	AssertEqual(t, fileMap["To"], "don.baughman@enron.com, test@newline.email, test2@newline.email")
 	AssertEqual(t, fileMap["Subject"], "FW: Online Timesheets")
