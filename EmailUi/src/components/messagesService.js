@@ -40,7 +40,7 @@ export function messagesService() {
     }
 
     const payload = {
-      query: { bool: { must } }, from, to, sort: ["-@timestamp"]
+      query: { bool: { must } }, from, to, sort: ["-Date"]
     }
     return payload
   }

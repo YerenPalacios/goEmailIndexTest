@@ -1,23 +1,19 @@
 package main
 
 import (
-	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"mime/multipart"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
 )
 
 // TODO: use environment variable
-const ZYNCSARCH_URL = "http://172.26.32.1:4080/api/_bulkv2"
+const ZYNCSARCH_URL = "http://172.26.32.1:4080"
 
 func ImportFileService(file multipart.File) (string, error) {
 	gzf, err := gzip.NewReader(file)
@@ -25,7 +21,7 @@ func ImportFileService(file multipart.File) (string, error) {
 		fmt.Println(err)
 		return "", errors.New("error opening file")
 	}
-	contentListMap, err := getFileAsMapList(gzf)
+	contentListMap, err := GetFileAsMapList(gzf)
 	if err != nil {
 		log.Println(err)
 		return "", errors.New("error reading file")
@@ -43,178 +39,59 @@ func ImportFileService(file multipart.File) (string, error) {
 	}
 }
 
-func getMapContent(rawContent string) map[string]string {
-	var item = make(map[string]string)
-	contentLines := strings.Split(rawContent, "\n")
-
-	fields := [16]string{
-		"Message-ID",
-		"Date",
-		"From",
-		"To",
-		"Subject",
-		"Cc",
-		"Mime-Version",
-		"Content-Type",
-		"Content-Transfer-Encoding",
-		"X-From",
-		"X-To",
-		"X-cc",
-		"X-Folder",
-		"X-Origin",
-		"X-FileName",
-	}
-	for _, v := range fields {
-		lineInfo := Filter(contentLines, func(i string) bool {
-			return strings.HasPrefix(i, v)
-		})
-
-		if len(lineInfo) > 0 {
-			splitedline := strings.Split(lineInfo[0], ": ")
-
-			if len(splitedline) > 2 {
-				splitedline[1] = strings.Join(splitedline[1:], ": ")
-			}
-
-			if len(splitedline) > 1 {
-
-				// obtains all "To" emails when are in more than one line
-				if v == "To" {
-					to := splitedline[1]
-					index := 3
-					for {
-						nextline := contentLines[index+1]
-						if !strings.HasPrefix(nextline, "\t") {
-							break
-						} else {
-							to = to + strings.Replace(nextline, "\t", "", -1)
-						}
-						index++
-					}
-					item[v] = to
-				} else {
-					item[v] = splitedline[1]
-				}
-
-			}
-		}
-	}
-	spaceSplitedText := strings.Split(rawContent, "\n\n")
-	if len(spaceSplitedText) >= 2 {
-		item["content"] = strings.Join(spaceSplitedText[1:], "\n")
-	} else {
-		// TODO: validate empty files
-		item["content"] = strings.Join(contentLines[15:], "\n")
-
-	}
-	item["_id"] = item["Message-ID"]
-
-	return item
-}
-
-func getMapFile(header *tar.Header, tarReader *tar.Reader) (map[string]string, error) {
-	name := header.Name
-
-	var contentBuffer bytes.Buffer
-
-	var item map[string]string
-
-	switch header.Typeflag {
-	case tar.TypeDir:
-		return item, errors.New("not file")
-	case tar.TypeReg:
-		if _, err := io.Copy(&contentBuffer, tarReader); err != nil {
-			fmt.Println("Error...")
-			return item, err
-		}
-		rawContent := contentBuffer.String()
-		rawContent = strings.Replace(rawContent, "\r\n", "\n", -1)
-
-		item = getMapContent(rawContent)
-		return item, nil
-	default:
-		fmt.Printf("%s : %c %s %s\n",
-			"Yikes! Unable to figure out type",
-			header.Typeflag,
-			"in file",
-			name,
-		)
-		return item, errors.New("not file")
-	}
-}
-
-func getFileAsMapList(tarFile *gzip.Reader) ([]map[string]string, error) {
-	tarReader := tar.NewReader(tarFile)
-	var fileContents []map[string]string
-
-	for {
-		header, err := tarReader.Next()
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		item, err := getMapFile(header, tarReader)
-
-		if err != nil {
-			if err.Error() == "not file" {
-				continue
-			} else {
-				fmt.Println(err)
-
-			}
-		} else {
-			fileContents = append(fileContents, item)
-		}
-	}
-	return fileContents, nil
-}
-
 func send(wg *sync.WaitGroup, body []byte, errorChannel chan error) {
 	defer wg.Done()
-	payload := bytes.NewBuffer(body)
-
-	req, err := http.NewRequest(
-		"POST",
-		ZYNCSARCH_URL,
-		payload,
-	)
-	if err != nil {
-		fmt.Println(err)
-		errorChannel <- err
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic YWRtaW46Q29tcGxleHBhc3MjMTIz")
-
-	client := &http.Client{}
-	x, err := client.Do(req)
-
-	if err != nil {
-		log.Println(err, x)
-		errorChannel <- err
-		return
-	}
-	errorChannel <- nil
+	_, err := doPost(ZYNCSARCH_URL+"/api/_bulkv2", body)
+	errorChannel <- err
 }
+
+func createIndex(name string) (string, error) {
+	mapBody := map[string]any{
+		"name":         name,
+		"storage_type": "disk",
+		"shard_num":    1,
+		"mappings": map[string]any{
+			"properties": map[string]any{
+				"Date": map[string]any{
+					"type":         "date",
+					"format":       time.RFC3339,
+					"index":        true,
+					"sortable":     true,
+					"aggregatable": true,
+				},
+			},
+		},
+	}
+	jsonBody, err := json.Marshal(mapBody)
+	if err != nil {
+		return "", err
+	}
+	res, err := doPost(ZYNCSARCH_URL+"/api/index", jsonBody)
+	if !strings.Contains(err.Error(), "already exists") {
+		return "", err
+	}
+	return res, nil
+}
+
+const IndexName = "Messages"
 
 func sendToZyncSearch(body []map[string]string) error {
 	wg := new(sync.WaitGroup)
 	errorChannel := make(chan error)
 	defer close(errorChannel)
 
+	_, err := createIndex(IndexName)
+	if err != nil {
+		return err
+	}
 	batches := GetBatch(body, 1000)
 
 	fmt.Println("Sending started at: ", time.Now(), "\n", len(batches), " Batches")
 
 	for _, batch := range batches {
 		wg.Add(1)
-		requestBody := map[string]interface{}{
-			"index":   "Messages",
+		requestBody := map[string]any{
+			"index":   IndexName,
 			"records": batch,
 		}
 		jsonData, err := json.Marshal(requestBody)
