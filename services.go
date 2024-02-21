@@ -50,17 +50,6 @@ func createIndex(name string) (string, error) {
 		"name":         name,
 		"storage_type": "disk",
 		"shard_num":    1,
-		"mappings": map[string]any{
-			"properties": map[string]any{
-				"Date": map[string]any{
-					"type":         "date",
-					"format":       time.RFC3339,
-					"index":        true,
-					"sortable":     true,
-					"aggregatable": true,
-				},
-			},
-		},
 	}
 	jsonBody, err := json.Marshal(mapBody)
 	if err != nil {
@@ -75,7 +64,7 @@ func createIndex(name string) (string, error) {
 
 const IndexName = "Messages"
 
-func sendToZyncSearch(body []map[string]string) error {
+func sendToZyncSearch(body []map[string]any) error {
 	wg := new(sync.WaitGroup)
 	errorChannel := make(chan error)
 	defer close(errorChannel)
