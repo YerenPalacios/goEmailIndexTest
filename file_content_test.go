@@ -3,9 +3,10 @@ package main
 import (
 	"io/ioutil"
 	"testing"
+	"time"
 )
 
-func AssertEqual(t *testing.T, expected any, current string) {
+func AssertEqual(t *testing.T, current any, expected any) {
 	if current != expected {
 		t.Fatalf("Expected \"%v\", got \"%v\"", current, expected)
 	}
@@ -21,9 +22,10 @@ func GetFileContent(t *testing.T, path string) string {
 
 func TestGetFileContent(t *testing.T) {
 	fileMap := getMapContent(GetFileContent(t, "./test_files/3"))
+
 	AssertEqual(t, fileMap["Message-ID"], "<27430435.1075840339331.JavaMail.evans@thyme>")
 	AssertEqual(t, fileMap["_id"], "<27430435.1075840339331.JavaMail.evans@thyme>")
-	AssertEqual(t, fileMap["Date"], "Tue, 19 Jun 2001 12:08:21 -0700 (PDT)")
+	AssertEqual(t, fileMap["Date"].(time.Time).String(), "2001-06-19 12:08:21 -0700 PDT")
 	AssertEqual(t, fileMap["From"], "liz.legros@enron.com")
 	AssertEqual(t, fileMap["To"], "don.baughman@enron.com, test@newline.email, test2@newline.email")
 	AssertEqual(t, fileMap["Subject"], "FW: Online Timesheets")

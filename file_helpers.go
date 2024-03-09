@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 )
 
 func getMapContent(rawContent string) map[string]any {
@@ -23,11 +24,22 @@ func getMapContent(rawContent string) map[string]any {
 			splitLine[1] = strings.Join(splitLine[1:], ": ")
 		}
 		if len(splitLine) > 1 {
-			item[splitLine[0]] = splitLine[1]
+			if splitLine[0] == "Date" {
+				currentFormat := "Mon, _2 Jan 2006 15:04:05 -0700 (MST)"
+				date, err := time.Parse(currentFormat, splitLine[1])
+				if err != nil {
+					fmt.Println(err)
+					date = time.Now()
+				}
+				item[splitLine[0]] = date
+			} else {
+				item[splitLine[0]] = splitLine[1]
+			}
 
 			if strings.HasPrefix(nextLine, "\t") {
 				hasMultiLineKey = splitLine[0]
 			}
+
 		}
 
 		if strings.HasPrefix(line, "\t") && hasMultiLineKey != "" {

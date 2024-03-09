@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
-	"strings"
 	"sync"
 	"time"
 )
@@ -45,23 +44,6 @@ func send(wg *sync.WaitGroup, body []byte, errorChannel chan error) {
 	errorChannel <- err
 }
 
-func createIndex(name string) (string, error) {
-	mapBody := map[string]any{
-		"name":         name,
-		"storage_type": "disk",
-		"shard_num":    1,
-	}
-	jsonBody, err := json.Marshal(mapBody)
-	if err != nil {
-		return "", err
-	}
-	res, err := doPost(ZYNCSARCH_URL+"/api/index", jsonBody)
-	if !strings.Contains(err.Error(), "already exists") {
-		return "", err
-	}
-	return string(res), nil
-}
-
 const IndexName = "Messages"
 
 func sendToZyncSearch(body []map[string]any) error {
@@ -69,10 +51,6 @@ func sendToZyncSearch(body []map[string]any) error {
 	errorChannel := make(chan error)
 	defer close(errorChannel)
 
-	_, err := createIndex(IndexName)
-	if err != nil {
-		return err
-	}
 	batches := GetBatch(body, 1000)
 
 	fmt.Println("Sending started at: ", time.Now(), "\n", len(batches), " Batches")
