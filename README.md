@@ -10,7 +10,7 @@ to ZincSearch and an interface to search the messages.
 ```
 2. run command `docker compose up` and go to http://127.0.0.1:5173 url
 3. Import the email database file in the file input (Currently supports only .tar files, t.tar.tgz is an example) \
-![img.png](img.png) 
-4. In local [ZyncSearch](http://localhost:4080/ui/search)  should be loaded the database ![img_1.png](img_1.png)
+![img.png](docs/img.png) 
+4. In local [ZyncSearch](http://localhost:4080/ui/search)  should be loaded the database ![img_1.png](docs/img_1.png)
 5. Then, messages can be searched in the search input
-![img_2.png](img_2.png)
+![img_2.png](docs/img_2.png)
