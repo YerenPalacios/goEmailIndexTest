@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 
@@ -23,5 +24,8 @@ func main() {
 	r.Mount("/debug", middleware.Profiler())
 
 	r.Post("/import_file", HandleImportFile)
+	r.Get("/messages", HandleGetMessages)
+
 	http.ListenAndServe("0.0.0.0:8000", r)
+	fmt.Println("Server started at http://localhost:8000")
 }

@@ -33,8 +33,38 @@ function updateCurrrentMessage(id) {
   }
 }
 
+function onGetMessages(data){
+  if (typeof data === "string"){
+    error.value = data
+  }
+  const hits = data?.hits?.hits || []
+
+  const get_from_name = xfrom => {
+    const splitedText = xfrom?.split('<')
+    if (splitedText && splitedText.length > 1) return splitedText[0]
+    else return xfrom
+  }
+
+  const messages = hits.map(message => {
+    const item = {
+      id: message._id,
+      subject: message._source.Subject || "(No subject provided)",
+      content: message._source.content,
+      from_email: message._source.From,
+      from_name: get_from_name(message._source['X-From']),
+      to_email: message._source.To,
+      to_name: get_from_name(message._source['X-To']),
+      date: message._source.Date
+    }
+    return item
+  })
+  currentMessages.value = messages
+  return messages
+}
+
+
 function searchMessages() {
-  getMessages(currentSearch)
+  getMessages(currentSearch, onGetMessages)
 }
 
 function appendMessages() {
@@ -43,7 +73,7 @@ function appendMessages() {
 }
 
 onMounted(() => {
-  getMessages('')
+  getMessages('', onGetMessages)
 })
 </script>
 

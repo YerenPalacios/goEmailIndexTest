@@ -59,7 +59,7 @@ func createIndex(name string) (string, error) {
 	if !strings.Contains(err.Error(), "already exists") {
 		return "", err
 	}
-	return res, nil
+	return string(res), nil
 }
 
 const IndexName = "Messages"

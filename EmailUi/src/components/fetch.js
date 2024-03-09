@@ -26,12 +26,12 @@ export function useFetch() {
 	const post = (url, body, callback = () => { }) => {
 		fetchData(url, {
 			method: 'POST',
-			body: JSON.stringify(body),
-			headers: {
-				'Content-type': 'application/json',
-				'Authorization': 'Basic YWRtaW46Q29tcGxleHBhc3MjMTIz'
-			}
+			body: JSON.stringify(body)
 		}, callback)
+	}
+
+	const get = (url, callback) => {
+		fetchData(url, {}, callback)
 	}
 
 	const postFile = (url, body, callback  = () => { }) => {
@@ -41,5 +41,5 @@ export function useFetch() {
 		}, callback)
 	}
 
-	return { data, error, loading, post, postFile }
+	return { data, error, loading, post, get, postFile }
 }
