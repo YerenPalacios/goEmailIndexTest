@@ -45,11 +45,11 @@ func removeDuplication(list []error) []error {
 	return newList
 }
 
-func doPost(url string, body []byte) (string, error) {
+func doPost(url string, body []byte) ([]byte, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return []byte(""), err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Basic YWRtaW46Q29tcGxleHBhc3MjMTIz")
@@ -57,17 +57,17 @@ func doPost(url string, body []byte) (string, error) {
 	res, err := client.Do(req)
 	if err != nil {
 		log.Println(err, res)
-		return "", err
+		return []byte(""), err
+	}
+	defer res.Body.Close()
+	content, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err, "Error reading response content")
+		return []byte(""), err
 	}
 	if res.StatusCode == http.StatusOK {
-		return "OK", nil
+		return content, nil
 	} else {
-		defer res.Body.Close()
-		content, err := io.ReadAll(res.Body)
-		if err != nil {
-			log.Println(err, "Error reading response content")
-			return "", err
-		}
-		return "", errors.New(string(content))
+		return []byte(""), errors.New(string(content))
 	}
 }
